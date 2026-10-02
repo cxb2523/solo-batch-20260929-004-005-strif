@@ -45,6 +45,15 @@ __all__ = (  # noqa: F405
     "replace_multiple",
     # string_template.py
     "StringTemplate",
+    "MissingVariableError",
+    "TemplateSyntaxError",
+    "RecursionLimitError",
+    "CompiledTemplate",
+    "compile_template",
+    "render_template",
+    "replace_template",
+    "template_hash",
+    "DEFAULT_MAX_DEPTH",
 )
 
 try:

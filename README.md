@@ -338,6 +338,37 @@ Examples:
 ' 10@19.99'
 ```
 
+## Template Server (`${...}` Engine)
+
+A separate `${...}` mini-language lives in `strif.string_template` and is served
+over HTTP by `strif.server`:
+
+- `${name}` substitutes a variable. `render_template()` raises
+  `MissingVariableError` when a value is absent; `replace_template()` substitutes
+  an empty string instead.
+- `$${...}` is an escape for a literal `${` and is decided before any condition
+  blocks are parsed.
+- Conditions `${?name}then${|}else${/}` are true iff the variable is present and
+  non-empty (`bool(value)`), and blocks can be nested.
+- Recursive expansion of values that themselves contain `${...}` only happens
+  with `recurse=True`; self references and cycles raise
+  `RecursionLimitError` (the server returns `409`) instead of hanging.
+
+Run the service and its acceptance suite:
+
+```bash
+uv run python -m strif.server   # POST /render, POST /compile, GET /trace/{id}/stream
+uv run python -m strif.selfcheck
+```
+
+Open `http://127.0.0.1:8765/trace` for a browser page that renders a template and
+plays the ordered decision trace over Server-Sent Events (escape, condition, and
+nesting decisions in token order). Compiled templates are cached by SHA-256
+content hash with single-flight merging: concurrent requests for identical
+templates compile exactly once, and changed content hashes miss automatically.
+SSE clients may disconnect without stopping the render and resume via
+`Last-Event-ID`.
+
 ## Multiple String Replacements
 
 `Insertion` and `Replacement` are `NamedTuple`s, so you can use named fields
