@@ -394,3 +394,27 @@ For instructions on publishing to PyPI, see [publishing.md](docs/publishing.md).
 
 *This project was built from
 [simple-modern-uv](https://github.com/jlevy/simple-modern-uv).*
+
+## Template Server
+
+`strif` ships a zero-dependency persistent service for its string-template engine.
+
+Template syntax: `${name}` for variables, `$${` to emit a literal `${`
+(escapes are decided before conditional blocks), and nestable
+`$if{name}...$else...$end` blocks that are true when the variable is present
+and non-empty. `render()` raises `MissingVariableError` on a missing value;
+`replace()` substitutes an empty string instead. With `recurse=true`,
+substituted values are themselves expanded as templates (a self-referential
+template hits the depth limit and returns `409`).
+
+```sh
+uv run python -m strif.server            # POST /render, POST /compile, SSE traces
+uv run python -m strif.selfcheck         # concurrency + trace-order acceptance
+```
+
+Open `http://127.0.0.1:8765/trace` in a browser to watch the ordered decision
+trace (escape, variable, condition, nesting) streamed over SSE and record it
+as a WebM screencast. Compiled templates are cached by a content hash with
+singleflight dedup (concurrent identical templates compile once; edits get a
+new hash), traces continue rendering if the SSE client disconnects, and
+reconnecting with `Last-Event-ID` resumes from the breakpoint.
